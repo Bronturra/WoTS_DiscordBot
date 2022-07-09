@@ -1,22 +1,24 @@
 import asyncio
-import discord
-from discord.ext import commands
-import requests
-from requests.exceptions import HTTPError
-from datetime import datetime
+import time
 
+import discord
+import requests
+from discord.ext import commands
+from requests.exceptions import HTTPError
+from datetime import datetime, date
+
+# Read DiscordToken from File when Script starts
 with open("DiscordToken.txt") as f:
     discordToken = f.read().rstrip("\n")
 
+# Read WoTAPIKey from File when Script starts
 with open("WoTAPIKey.txt") as f:
     apiKey = f.read().rstrip("\n")
 
+# Global variables
 WoTAPIKey = apiKey
 DiscordToken = discordToken
-
-
-description = '''WoT-Statistic & more!'''
-client = commands.Bot(command_prefix='!', description=description)
+client = commands.Bot(command_prefix='!')
 
 
 @client.event
@@ -25,10 +27,12 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------')
+    await client.change_presence(status=discord.Status.online, activity=discord.Game('!wots_help'))
 
 
 @client.command()
 async def info(ctx, userName):
+    print(f'User "{ctx.author}" typed: !info {userName}')
     isEntryFoundinDB = False
     try:
         # Fetch all informations
@@ -45,7 +49,7 @@ async def info(ctx, userName):
             userName = response['data'][0]['nickname']  # Returns WOT-Username
             accountID = response['data'][0]['account_id']  # Returns WOT-AccountID
             asyncio.create_task(get_user_data(str(accountID), str(userName), ctx))  # Fetch all Account Informations
-        elif status == 'ok' and meta > 1:
+        elif status == 'ok' and meta > 1: # Request successful and multiple players found
             for i in range(len(response['data'])):
                 if response['data'][i]['nickname'] == userName:
                     isEntryFoundinDB = True
@@ -55,7 +59,7 @@ async def info(ctx, userName):
             if not isEntryFoundinDB:
                 await ctx.send(f'No user with name "{userName}" found.')
         else:  # Error occurred
-            await ctx.send('Request error.')
+            await ctx.send('Request error. Try again.')
             pass
     except HTTPError as http_err:
         await ctx.send(f'HTTPError {http_err} occurred.')
@@ -96,13 +100,13 @@ async def get_user_data(accountID, accountName, ctx):
             tankingFactor = response['data'][accountID]['statistics']['all']['tanking_factor']
 
             embed = discord.Embed(
-                title=f'Info for User {nickname} - ID {accountID}',
-                #description="This is my description",
-                colour=discord.Colour.purple()
+                title=f'User: {nickname}\nID: {accountID}',
+                description="The following information was found:",
+                colour=discord.Colour.green()
             )
-            embed.set_author(name='WoTS Bot')
-            #embed.set_footer(text='this is my footer')
-
+            embed.set_author(icon_url='https://emojipedia-us.s3.amazonaws.com/source/skype/289/check-mark_2714-fe0f.png', name='Request Successful')
+            #embed.set_author(icon_url='/assets/checkmark_request.png', name='Request Successful')  # TODO: NEEDED TO TRIGGER AN ERROR!
+            embed.set_footer(text=f'Information created on {date.today()} at {time.strftime("%H:%M:%S")}')
             embed.add_field(name='Global Rating', value=f'{globalRating}', inline=True)
             embed.add_field(name='Lifetime XP', value=f'{lifetimeXP}', inline=True)
             embed.add_field(name='Tanking Factor', value=f'{tankingFactor}', inline=True)
@@ -122,12 +126,24 @@ async def get_user_data(accountID, accountName, ctx):
             await ctx.send(embed=embed)
 
         else:  # Error occurred
-            await ctx.send('Request error.')
+            await ctx.send('Request Error. Try again.')
             pass
     except HTTPError as http_err:
-        await ctx.send(f'HTTPError {http_err} occurred.')
+        await ctx.send(f'HTTP Error {http_err} occurred.')
     except Exception as err:
-        await ctx.send(f'Error {err} occurred.')
+        embed = discord.Embed(
+            title=f'Exception Error occurred.',
+            description="The following error occurred:",
+            colour=discord.Colour.red()
+        )
+        embed.set_author(icon_url='https://thumbs.dreamstime.com/b/check-marks-red-cross-icon-simple-vector-illustration-140098693.jpg', name='Request Error')
+        embed.add_field(name='Error:', value=f'{err}', inline=True)
+        embed.set_footer(text=f'Error occurred on {date.today()} at {time.strftime("%H:%M:%S")}')
+        await ctx.send(embed=embed)
+
+
+client.run(DiscordToken)
+
 
 
 def get_user_tanks(userAccountID):
@@ -136,6 +152,3 @@ def get_user_tanks(userAccountID):
         'https://api.worldoftanks.eu/wot/account/tanks/?application_id=' + WoTAPIKey + '&account_id=' + userAccountID)
     user_json = response.json()
     print(user_json)
-
-
-client.run(DiscordToken)
