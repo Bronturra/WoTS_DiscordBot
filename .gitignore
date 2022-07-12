@@ -1,4 +1,5 @@
 /.idea
 /virtualenv/
-/DiscordToken.txt
-/WoTAPIKey.txt
+/Tokens/DiscordToken.txt
+/Tokens/WoTAPIKey.txt
+/Tokens/
