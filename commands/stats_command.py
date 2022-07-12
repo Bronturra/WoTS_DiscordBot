@@ -11,7 +11,7 @@ successfulCheckmark = 'https://emojipedia-us.s3.amazonaws.com/source/skype/289/c
 unsuccessfulCheckmark = 'https://thumbs.dreamstime.com/b/check-marks-red-cross-icon-simple-vector-illustration-140098693.jpg'
 infoCheckmark = 'https://previews.123rf.com/images/vanreeell/vanreeell2101/vanreeell210100291/162736118-.jpg'
 language = 'en'
-locale.setlocale(locale.LC_ALL, 'en_US.utf-8')
+locale.setlocale(locale.LC_ALL, '')
 
 # Read WoTAPIKey from File when Script starts
 with open("Tokens/WoTAPIKey.txt") as f:

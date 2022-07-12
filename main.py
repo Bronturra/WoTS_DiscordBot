@@ -13,7 +13,7 @@
 
 import discord
 from discord.ext import commands
-from termcolor import colored
+#from termcolor import colored
 from os import listdir
 from os.path import isfile, join
 
@@ -33,8 +33,10 @@ class DiscordBot(commands.Bot):
 
     # This function is executed after the program started to execute and is loaded
     async def on_ready(self):
-        print(colored('[WoTS]', 'yellow') + ' Bot is ' + colored('online', 'green') + '.')
-        print(colored('[WoTS]', 'yellow') + ' Bot is listed on ' + colored(str(len(bot.guilds)), 'green') + ' Servers.')
+        #print(colored('[WoTS]', 'yellow') + ' Bot is ' + colored('online', 'green') + '.')
+        #print(colored('[WoTS]', 'yellow') + ' Bot is listed on ' + colored(str(len(bot.guilds)), 'green') + ' Servers.')
+        print('[WoTS] Bot is online.')
+        print('[WoTS] Bot is listed on ' + str(len(bot.guilds)) + ' Servers.')
         print('---------------------')
         await bot.change_presence(status=discord.Status.online, activity=discord.Game('!wots_help'))
 
