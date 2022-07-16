@@ -15,8 +15,8 @@ WoTAPIKey = apiKey
 
 # This command is executed after a user send the command "!tanks" in discord
 @commands.command()
-async def tanks(ctx, userID):
-    print(f'[{date.today()} at {time.strftime("%H:%M:%S")}] User "{ctx.author}" typed: !tanks {userID}')
+async def tank(ctx, userID):
+    print(f'[{date.today()} at {time.strftime("%H:%M:%S")}] User "{ctx.author}" typed: !tank {userID}')
 
     async with ctx.typing():
         await asyncio.sleep(0.125)
@@ -39,4 +39,4 @@ async def tanks(ctx, userID):
 
 # Add Commands to the DiscordBot
 def setup(bot):
-    bot.add_command(tanks)
+    bot.add_command(tank)

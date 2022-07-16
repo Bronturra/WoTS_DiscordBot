@@ -5,20 +5,19 @@ import time
 import requests
 from discord.ext import commands
 from datetime import datetime, date
+from data.tank_list import tanklist
 
+# Variables
 successfulCheckmark = 'https://emojipedia-us.s3.amazonaws.com/source/skype/289/check-mark_2714-fe0f.png'
 unsuccessfulCheckmark = 'https://thumbs.dreamstime.com/b/check-marks-red-cross-icon-simple-vector-illustration-140098693.jpg'
-infoCheckmark = 'https://previews.123rf.com/images/vanreeell/vanreeell2101/vanreeell210100291/162736118-.jpg'
 language = 'en'
 locale.setlocale(locale.LC_ALL, '')
 
 # Read WoTAPIKey from File when Script starts
 with open("Tokens/WoTAPIKey.txt") as f:
+    # Read WoTAPIKey from File
     apiKey = f.read().rstrip("\n")
     f.close()
-
-# Global variables
-WoTAPIKey = apiKey
 
 
 # This command is executed after a user send the command "!stats" in discord
@@ -34,7 +33,7 @@ async def stats(ctx, userName):
 
     try:
         # Fetch all informations
-        urlList = f'https://api.worldoftanks.{region}/wot/account/list/?application_id={WoTAPIKey}&search={userName}'
+        urlList = f'https://api.worldoftanks.{region}/wot/account/list/?application_id={apiKey}&search={userName}'
         response = requests.get(urlList).json()
         # Listings
         status = response['status']  # Returns 'ok' if successful
@@ -96,8 +95,9 @@ async def get_user_data(userID, userName, ctx):
     try:
         # Variables
         region = 'eu'
+        keyfind = False
         # Fetch all informations
-        urlInfo = f'https://api.worldoftanks.{region}/wot/account/info/?application_id={WoTAPIKey}&account_id={userID}'
+        urlInfo = f'https://api.worldoftanks.{region}/wot/account/info/?application_id={apiKey}&account_id={userID}'
         response = requests.get(urlInfo).json()
         # Listings
         status = response['status']
@@ -133,31 +133,54 @@ async def get_user_data(userID, userName, ctx):
                 value=f'Following Statistics were found for **{userName}**:\nhttps://worldoftanks.eu/{language}/community/accounts/{accountID}-{userName}/\n', inline=False,)
 
             embed.add_field(name='__Battles:__', value=f'```{locale.format_string("%d", battles)}```', inline=True)
-            embed.add_field(name='__Winrate:__', value=f'```{(wins/battles)*100:.02f}%```', inline=True)
+            if battles == 0:
+                embed.add_field(name='__Winrate:__', value=f'```{0}%```', inline=True)
+            else:
+                embed.add_field(name='__Winrate:__', value=f'```{(wins / battles)* 100:.02f}%```', inline=True)
             embed.add_field(name='__Last Battle:__', value=f'```{lastBattle.time()}  |  {lastBattle.date()}```', inline=True)
 
             embed.add_field(name='__Wins:__', value=f'```{locale.format_string("%d", wins)}```', inline=True)
             embed.add_field(name='__Losses:__', value=f'```{locale.format_string("%d", losses)}```', inline=True)
             embed.add_field(name='__Draws:__', value=f'```{locale.format_string("%d", draws)}```', inline=True)
 
-            embed.add_field(name='__Hits:__', value=f'```{(hits / shots)*100:.02f}%```', inline=True)
+            if shots == 0:
+                embed.add_field(name='__Hits:__', value=f'```{0}%```', inline=True)
+            else:
+                embed.add_field(name='__Hits:__', value=f'```{(hits / shots)*100:.02f}%```', inline=True)
             embed.add_field(name='__Frags:__', value=f'```{locale.format_string("%d", frags)}```', inline=True)
             embed.add_field(name='__Spots:__', value=f'```{locale.format_string("%d", spotted)}```', inline=True)
 
             embed.add_field(name='__AVG Battle Experience:__', value=f'```{avg_xp}```', inline=True)
-            embed.add_field(name='__AVG Battle Damage:__', value=f'```{(damage / battles):.00f}```', inline=True)
-            embed.add_field(name='__AVG Battle Frags:__', value=f'```{(frags / battles):.02f}```', inline=True)
+            if battles == 0:
+                embed.add_field(name='__AVG Battle Damage:__', value=f'```{0}```', inline=True)
+            else:
+                embed.add_field(name='__AVG Battle Damage:__', value=f'```{(damage / battles):.00f}```', inline=True)
+            if battles == 0:
+                embed.add_field(name='__AVG Battle Frags:__', value=f'```{0}```', inline=True)
+            else:
+                embed.add_field(name='__AVG Battle Frags:__', value=f'```{(frags / battles):.02f}```', inline=True)
 
             embed.add_field(name='__MAX Battle Experience:__', value=f'```{maxXP}```', inline=True)
             embed.add_field(name='__MAX Battle Damage:__', value=f'```{maxDMG}```', inline=True)
-            embed.add_field(name='__MAX Battle Frags:__', value=f'```{maxFrags} ({maxFragsTankID})```', inline=True)
 
+            for key in tanklist:
+                print(f'Key:{key} -> ID:{maxFragsTankID}, Identical: {key == maxFragsTankID}')
+                if key == maxFragsTankID:
+                    print('Identical!')
+                    embed.add_field(name='__MAX Battle Frags:__', value=f'```{maxFrags} ({tanklist[maxFragsTankID]})```', inline=True)
+                    keyfind = True
+                    break
+            print(keyfind)
+            if keyfind == True:
+                embed.add_field(name='__MAX Battle Frags:__', value=f'```{maxFrags} ({tanklist[maxFragsTankID]})```', inline=True)
+            else:
+                embed.add_field(name='__MAX Battle Frags:__', value=f'```{maxFrags} ({maxFragsTankID})```', inline=True)
             embed.add_field(name='__Tanking Factor:__', value=f'```{tankingFactor}```', inline=True)
             embed.add_field(name='__Lumberjack:__', value=f'```{lumberjack} Trees cut.```', inline=True)
 
             embed.set_footer(text=f'Information created on {date.today()} at {time.strftime("%H:%M:%S")}')
-            await ctx.send(f'{ctx.author.mention}', embed=embed)
-
+            #await ctx.send(f'{ctx.author.mention}', embed=embed)
+            await ctx.reply(embed=embed)
         else:  # Error occurred
             embed = discord.Embed(
                 title='Try again.',
